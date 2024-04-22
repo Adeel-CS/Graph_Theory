@@ -1,13 +1,17 @@
 import os
 import networkx as nx
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
 
 # Function to create graphs from files in the cleaned_content folder
 def create_graphs_from_files(folder_path, max_train_files=12, max_test_files=3):
     training_data = []
     testing_data = []
     categories = os.listdir(folder_path)
-    print(categories,"Hiiii")
     for category in categories:
         category_folder = os.path.join(folder_path, category)
         if os.path.isdir(category_folder):
@@ -73,7 +77,7 @@ def predict_class(new_graph, training_data, k=3, decay_factor=0.5):
         for graph in graphs:
             distance = calculate_maximum_common_subgraph_distance(new_graph, graph)
             category_distances[category].append(distance)
-    
+
     # Calculate weighted votes based on distances
     class_weights = {}
     for category, distances in category_distances.items():
@@ -92,13 +96,26 @@ def predict_class(new_graph, training_data, k=3, decay_factor=0.5):
     
     # Choose the class with maximum weighted vote
     majority_class = max(class_weights, key=class_weights.get)
-    print(majority_class,"hsdifsdas")
     return majority_class
 
 
 # Example usage:
 folder_path = 'cleaned_content'
 training_data, testing_data = create_graphs_from_files(folder_path)
+
+
+
+# Function to generate confusion matrix
+def generate_confusion_matrix(true_labels, predicted_labels, classes):
+    cm = confusion_matrix(true_labels, predicted_labels, labels=classes)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=classes, yticklabels=classes)
+    plt.xlabel('Predicted labels')
+    plt.ylabel('True labels')
+    plt.title('Confusion Matrix')
+    plt.show()
+
+
 
 def display_graphs(graphs, category_name, category_type):
     plt.figure(figsize=(10, 6))
@@ -115,28 +132,24 @@ def display_graphs(graphs, category_name, category_type):
     plt.tight_layout()
     plt.show()
 
-# Assuming you have already populated the `training_data` variable
 
-# Print the contents of training_data
-print("Training Data:")
-for category, graph in training_data:
-    print("Category:", category)
-    # print("Graph:", graph)
-    
+true_predicted_categories = {}
 
 # Predict the class for all graphs in each category in the testing data
-# Predict the class for all graphs in each category in the testing data
-predicted_classes = {}
+true_labels = []
+predicted_labels = []
 for category, graphs in testing_data:
-    predicted_classes[category] = []
+    print(f"\nCategory: {category}")
     for graph in graphs:
-        category_mcs_distances = predict_class(graph, training_data)
-        predicted_class = max(category_mcs_distances, key=category_mcs_distances.get)
-        predicted_classes[category].append(predicted_class)
-        print(f"Predicted class for graph in category '{category}': {predicted_class}")
-
-# Print the predicted classes for each category
-for category, predictions in predicted_classes.items():
-    print(f"Predicted classes for category '{category}': {predictions}")
+        true_category = category  # True category is the category of the current testing data
+        predicted_category = predict_class(graph, training_data)
+        true_predicted_categories[(true_category, predicted_category)] = true_predicted_categories.get((true_category, predicted_category), 0) + 1
+        true_labels.append(true_category)
+        predicted_labels.append(predicted_category)
+        print(f"True Category: {true_category}, Predicted Category: {predicted_category}")
 
 
+# Define the classes
+classes = list(set(true_labels))
+# Generate confusion matrix
+generate_confusion_matrix(true_labels, predicted_labels, classes)
