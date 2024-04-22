@@ -99,10 +99,30 @@ def predict_class(new_graph, training_data, k=3, decay_factor=0.5):
     return majority_class
 
 
+
+# Function to display graphs
+def display_graphs(graphs, category_name, category_type):
+    plt.figure(figsize=(10, 6))
+    plt.suptitle(f"Graphs - {category_type} - {category_name}", fontsize=16)
+    num_graphs = len(graphs)
+    rows = num_graphs // 2 + (num_graphs % 2 > 0)
+    for i, graph in enumerate(graphs, start=1):
+        plt.subplot(rows, 2, i)
+        pos = nx.spring_layout(graph)
+        nx.draw(graph, pos, with_labels=True, node_size=300, font_size=10, node_color='skyblue', edge_color='gray', linewidths=1)
+        plt.title(f"Graph {i}")
+        num_nodes = len(graph.nodes())
+        plt.text(0.5, 0.95, f"Number of Nodes: {num_nodes}", horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
+    plt.tight_layout()
+    plt.show()
+
 # Example usage:
 folder_path = 'cleaned_content'
 training_data, testing_data = create_graphs_from_files(folder_path)
 
+# Call display_graphs function
+for category, graphs in testing_data:
+    display_graphs(graphs, category, "Testing")
 
 
 # Function to generate confusion matrix
