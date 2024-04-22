@@ -7,6 +7,7 @@ def create_graphs_from_files(folder_path, max_train_files=12, max_test_files=3):
     training_data = []
     testing_data = []
     categories = os.listdir(folder_path)
+    print(categories,"Hiiii")
     for category in categories:
         category_folder = os.path.join(folder_path, category)
         if os.path.isdir(category_folder):
@@ -64,17 +65,35 @@ def calculate_maximum_common_subgraph_distance(graph1, graph2):
     # Calculate and return the MCS distance
     return 1 - (common_subgraph_count / max_graph_size)
 
-
 # Function to predict the class of a new graph based on maximum common subgraph (MCS) distances
-def predict_graph_class(new_graph, training_data, k=3, decay_factor=0.5):
-    category_mcs_distances = {}  # Dictionary to store MCS distances for each category
+def predict_class(new_graph, training_data, k=3, decay_factor=0.5):
+    category_distances = {}  # Dictionary to store distances for each category
     for category, graphs in training_data:
-        category_mcs_distances[category] = []  # Initialize list for MCS distances in the category
+        category_distances[category] = []  # Initialize list for distances in the category
         for graph in graphs:
-            mcs_distance = calculate_maximum_common_subgraph_distance(new_graph, graph)
-            category_mcs_distances[category].append(mcs_distance)
-    return category_mcs_distances
-
+            distance = calculate_maximum_common_subgraph_distance(new_graph, graph)
+            category_distances[category].append(distance)
+    
+    # Calculate weighted votes based on distances
+    class_weights = {}
+    for category, distances in category_distances.items():
+        total_weight = 0
+        for i, dist in enumerate(sorted(distances)[:k], 1):  # Consider only k nearest neighbors
+            weight = (1 / (dist + 0.0001)) * (decay_factor ** i)  # Adding a small value to avoid division by zero
+            total_weight += weight
+        class_weights[category] = total_weight
+    
+    # Normalize weights
+    total_weight = sum(class_weights.values())
+    if total_weight == 0:
+        return None  # Return None if all distances are infinity
+    for category in class_weights:
+        class_weights[category] /= total_weight
+    
+    # Choose the class with maximum weighted vote
+    majority_class = max(class_weights, key=class_weights.get)
+    print(majority_class,"hsdifsdas")
+    return majority_class
 
 
 # Example usage:
@@ -106,58 +125,18 @@ for category, graph in training_data:
     
 
 # Predict the class for all graphs in each category in the testing data
+# Predict the class for all graphs in each category in the testing data
 predicted_classes = {}
 for category, graphs in testing_data:
     predicted_classes[category] = []
     for graph in graphs:
-        category_mcs_distances = predict_graph_class(graph, training_data)
+        category_mcs_distances = predict_class(graph, training_data)
         predicted_class = max(category_mcs_distances, key=category_mcs_distances.get)
         predicted_classes[category].append(predicted_class)
+        print(f"Predicted class for graph in category '{category}': {predicted_class}")
 
 # Print the predicted classes for each category
 for category, predictions in predicted_classes.items():
     print(f"Predicted classes for category '{category}': {predictions}")
-
-
-
-
-
-
-
-
-
-
-
-# # Create a dictionary to store the count of graphs for each category
-# category_graph_counts = {}
-
-# # Count the number of graphs for each category
-# for category, graphs in training_data:
-#     if category in category_graph_counts:
-#         category_graph_counts[category] += len(graphs)
-#     else:
-#         category_graph_counts[category] = len(graphs)
-
-# # Print the counts for each category
-# for category, count in category_graph_counts.items():
-#     print(f"Category '{category}' has {count} graph(s).")
-
-
-# # Create a dictionary to store the count of graphs for each category in testing_data
-# testing_category_graph_counts = {}
-
-# # Count the number of graphs for each category in testing_data
-# for category, graphs in testing_data:
-#     if category in testing_category_graph_counts:
-#         testing_category_graph_counts[category] += len(graphs)
-#     else:
-#         testing_category_graph_counts[category] = len(graphs)
-
-# # Print the counts for each category in testing_data
-# for category, count in testing_category_graph_counts.items():
-#     print(f"Category '{category}' has {count} graph(s) in testing data.")
-
-
-
 
 
