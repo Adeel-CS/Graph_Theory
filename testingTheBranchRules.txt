@@ -1,0 +1,1 @@
+Testing the branch rules or restrictions to protect the main branch from ever getting deleted or changed by other users
