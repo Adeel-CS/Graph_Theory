@@ -2,3 +2,6 @@ Testing the branch rules or restrictions to protect the main branch from ever ge
 
 
 Now checking what the rule is going to be!!
+
+
+Have Creeated a Key GPG in github used it now checking again for the commits 
